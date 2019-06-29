@@ -2,7 +2,6 @@ package todo
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 
@@ -30,6 +29,7 @@ func (Todohandler) PostTodosHandler(c *gin.Context) {
 	db, err := database.GetDBConn()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err)
+		return
 	}
 	defer db.Close()
 
@@ -39,6 +39,7 @@ func (Todohandler) PostTodosHandler(c *gin.Context) {
 	err = row.Scan(&id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err)
+		return
 	}
 	t.ID = id
 	fmt.Println("Insert success id :", id)
@@ -49,12 +50,14 @@ func (Todohandler) GetTodosHandler(c *gin.Context) {
 	db, err := database.GetDBConn()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err)
+		return
 	}
 	defer db.Close()
 
 	stmt, err := db.Prepare("SELECT id, title, status FROM todos WHERE id = $1")
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err)
+		return
 	}
 
 	idst := c.Param("id")
@@ -65,6 +68,7 @@ func (Todohandler) GetTodosHandler(c *gin.Context) {
 	err = row.Scan(&t.ID, &t.Title, &t.Status)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err)
+		return
 	}
 	fmt.Println("Select one row is", t.ID, t.Title, t.Status)
 	c.JSON(200, t)
@@ -74,16 +78,19 @@ func (Todohandler) GetlistTodosHandler(c *gin.Context) {
 	db, err := database.GetDBConn()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err)
+		return
 	}
 	defer db.Close()
 
 	stmt, err := db.Prepare("SELECT id, title, status FROM todos")
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err)
+		return
 	}
 	rows, err := stmt.Query()
 	if err != nil {
-		log.Fatal("Can't query", err.Error())
+		c.JSON(http.StatusInternalServerError, err)
+		return
 	}
 
 	todos := []Todo{}
@@ -103,12 +110,14 @@ func (Todohandler) PutupdateTodosHandler(c *gin.Context) {
 	db, err := database.GetDBConn()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err)
+		return
 	}
 	defer db.Close()
 
 	stmt, err := db.Prepare("UPDATE todos SET status=$2, title=$3 WHERE id=$1")
 	if err != nil {
-		log.Fatal("Prepare error ", err.Error())
+		c.JSON(http.StatusInternalServerError, err)
+		return
 	}
 
 	idin := c.Param("id")
@@ -136,12 +145,14 @@ func (Todohandler) DeleteTodosByIdHandler(c *gin.Context) {
 	db, err := database.GetDBConn()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err)
+		return
 	}
 	defer db.Close()
 
 	stmt, err := db.Prepare("DELETE FROM todos WHERE id=$1")
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err)
+		return
 	}
 
 	idst := c.Param("id")
